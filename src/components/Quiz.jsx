@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home } from 'lucide-react'
+import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
 
@@ -23,6 +23,61 @@ export default function Quiz() {
   const [evaluating, setEvaluating] = useState(false)
   const [currentFeedback, setCurrentFeedback] = useState(null)
   const [sessionId, setSessionId] = useState(null)
+
+  // Speech-to-text (Web Speech API)
+  const [isListening, setIsListening] = useState(false)
+  const [recognition, setRecognition] = useState(null)
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SpeechRecognition) {
+      const recog = new SpeechRecognition()
+      recog.lang = 'fr-FR'
+      recog.continuous = true
+      recog.interimResults = true
+
+      recog.onresult = (event) => {
+        let finalTranscript = ''
+        let interimTranscript = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript
+          } else {
+            interimTranscript = transcript
+          }
+        }
+        if (finalTranscript) {
+          setOpenAnswer(prev => prev + (prev ? ' ' : '') + finalTranscript)
+        }
+      }
+
+      recog.onerror = (event) => {
+        console.warn('Speech error:', event.error)
+        setIsListening(false)
+      }
+
+      recog.onend = () => {
+        setIsListening(false)
+      }
+
+      setRecognition(recog)
+    }
+  }, [])
+
+  function toggleMic() {
+    if (!recognition) {
+      alert('La reconnaissance vocale n\'est pas supportée par ton navigateur.')
+      return
+    }
+    if (isListening) {
+      recognition.stop()
+      setIsListening(false)
+    } else {
+      recognition.start()
+      setIsListening(true)
+    }
+  }
 
   // Setup : charger les questions
   async function startQuiz() {
@@ -101,6 +156,10 @@ export default function Quiz() {
   // Soumettre une réponse ouverte (évaluation IA)
   async function submitOpenAnswer() {
     if (!openAnswer.trim()) return
+    if (recognition && isListening) {
+      recognition.stop()
+      setIsListening(false)
+    }
     setEvaluating(true)
     setShowCorrection(true)
 
@@ -153,6 +212,10 @@ export default function Quiz() {
 
   // Question suivante
   function nextQuestion() {
+    if (recognition && isListening) {
+      recognition.stop()
+      setIsListening(false)
+    }
     if (currentIndex + 1 >= questions.length) {
       finishQuiz()
       return
@@ -398,14 +461,24 @@ export default function Quiz() {
 
         {/* Question ouverte */}
         {currentQuestion.type === 'open' && (
-          <div>
+          <div className="open-answer-wrapper">
             <textarea
               className="answer-textarea"
               value={openAnswer}
               onChange={e => setOpenAnswer(e.target.value)}
-              placeholder="Tape ta réponse ici..."
+              placeholder={isListening ? '🎙️ Parle maintenant...' : 'Tape ta réponse ici...'}
               disabled={showCorrection}
             />
+            {!showCorrection && (
+              <button
+                className={`mic-btn ${isListening ? 'mic-active' : ''}`}
+                onClick={toggleMic}
+                type="button"
+                title={isListening ? 'Arrêter la dictée' : 'Dicter ma réponse'}
+              >
+                {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+              </button>
+            )}
           </div>
         )}
 

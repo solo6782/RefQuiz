@@ -137,6 +137,12 @@ select { cursor: pointer; appearance: none; background-image: url("data:image/sv
 .choice-letter { width: 28px; height: 28px; border-radius: 6px; background: var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
 .answer-textarea { width: 100%; min-height: 140px; padding: 16px; background: var(--bg-input); border: 2px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; line-height: 1.6; resize: vertical; transition: border-color 0.2s; }
 .answer-textarea:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px var(--accent-blue-soft); }
+
+.open-answer-wrapper { position: relative; }
+.mic-btn { position: absolute; bottom: 12px; right: 12px; width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.mic-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); background: var(--accent-blue-soft); }
+.mic-btn.mic-active { border-color: var(--accent-red); color: var(--accent-red); background: var(--accent-red-soft); animation: mic-pulse 1.5s ease-in-out infinite; }
+@keyframes mic-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } }
 .quiz-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 
 /* AI Feedback */
