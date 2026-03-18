@@ -7,13 +7,33 @@ import { useApp } from '../App'
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 const FREE_WEEKLY_LIMIT = 3
 
+const CATEGORY_GROUPS = [
+  { id: 'L1-2', label: 'Lois 1-2 — Terrain & Ballon', categoryIds: [1, 2] },
+  { id: 'L3', label: 'Loi 3 — Les joueurs', categoryIds: [3] },
+  { id: 'L4', label: 'Loi 4 — L\'équipement', categoryIds: [4] },
+  { id: 'L5-7', label: 'Lois 5-6-7 — Arbitre, Officiels & Durée', categoryIds: [5, 6, 7] },
+  { id: 'L8-10', label: 'Lois 8-9-10 — Reprise, Ballon en jeu & Issue', categoryIds: [8, 9, 10] },
+  { id: 'L11', label: 'Loi 11 — Hors-jeu', categoryIds: [11] },
+  { id: 'L12', label: 'Loi 12 — Fautes & comportement', categoryIds: [12] },
+  { id: 'L13', label: 'Loi 13 — Coups francs', categoryIds: [13] },
+  { id: 'L14', label: 'Loi 14 — Penalty', categoryIds: [14] },
+  { id: 'L15-17', label: 'Lois 15-16-17 — Remises en jeu', categoryIds: [15, 16, 17] },
+]
+
+const DIFFICULTY_MODES = [
+  { id: 'easy', label: '🟢 Facile', maxDifficulty: 1 },
+  { id: 'medium', label: '🟡 Moyen', maxDifficulty: 2 },
+  { id: 'hard', label: '🔴 Difficile', maxDifficulty: 3 },
+]
+
 export default function Quiz() {
   const { profile, categories } = useApp()
   const navigate = useNavigate()
 
   // States
   const [phase, setPhase] = useState('setup') // setup | playing | results
-  const [categoryId, setCategoryId] = useState('')
+  const [groupId, setGroupId] = useState('')
+  const [difficultyMode, setDifficultyMode] = useState('hard')
   const [numQuestions, setNumQuestions] = useState(10)
   const [questions, setQuestions] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -115,19 +135,28 @@ export default function Quiz() {
       return
     }
 
+    // Déterminer les category_ids selon le groupe sélectionné
+    const group = CATEGORY_GROUPS.find(g => g.id === groupId)
+    const categoryIds = group ? group.categoryIds : null
+
+    // Déterminer la difficulté max
+    const mode = DIFFICULTY_MODES.find(m => m.id === difficultyMode)
+    const maxDiff = mode ? mode.maxDifficulty : 3
+
     let query = supabase
       .from('questions')
       .select('*, categories(name, law_number)')
       .eq('is_active', true)
+      .lte('difficulty', maxDiff)
 
-    if (categoryId) {
-      query = query.eq('category_id', parseInt(categoryId))
+    if (categoryIds) {
+      query = query.in('category_id', categoryIds)
     }
 
     const { data, error } = await query
 
     if (error || !data || data.length === 0) {
-      alert('Aucune question disponible pour cette catégorie.')
+      alert('Pas assez de questions disponibles pour cette sélection.')
       return
     }
 
@@ -140,7 +169,7 @@ export default function Quiz() {
       .from('quiz_sessions')
       .insert({
         user_id: profile.id,
-        category_id: categoryId ? parseInt(categoryId) : null,
+        category_id: categoryIds && categoryIds.length === 1 ? categoryIds[0] : null,
         total_questions: shuffled.length,
       })
       .select()
@@ -301,12 +330,33 @@ export default function Quiz() {
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="form-group">
               <label>Catégorie</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} disabled={quotaReached}>
-                <option value="">Toutes les catégories</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.law_number} — {c.name}</option>
+              <select value={groupId} onChange={e => setGroupId(e.target.value)} disabled={quotaReached}>
+                <option value="">Toutes les lois</option>
+                {CATEGORY_GROUPS.map(g => (
+                  <option key={g.id} value={g.id}>{g.label}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Difficulté</label>
+              <div className="difficulty-selector">
+                {DIFFICULTY_MODES.map(m => (
+                  <button
+                    key={m.id}
+                    className={`difficulty-btn ${difficultyMode === m.id ? 'active' : ''} diff-${m.id}`}
+                    onClick={() => !quotaReached && setDifficultyMode(m.id)}
+                    disabled={quotaReached}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                {difficultyMode === 'easy' && 'Questions faciles uniquement'}
+                {difficultyMode === 'medium' && 'Questions faciles + moyennes'}
+                {difficultyMode === 'hard' && 'Toutes les questions, y compris les plus dures'}
+              </div>
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>

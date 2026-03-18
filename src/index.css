@@ -217,6 +217,14 @@ tr:hover td { background: var(--bg-card); }
 .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bounce { 0%,80%,100% { transform:scale(0.6); opacity:0.4; } 40% { transform:scale(1); opacity:1; } }
 
+/* Difficulty selector */
+.difficulty-selector { display: flex; gap: 8px; }
+.difficulty-btn { flex: 1; padding: 10px 8px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.difficulty-btn:hover { border-color: var(--text-muted); }
+.difficulty-btn.active.diff-easy { border-color: var(--accent-green); background: var(--accent-green-soft); color: var(--accent-green); }
+.difficulty-btn.active.diff-medium { border-color: var(--accent-yellow); background: var(--accent-yellow-soft); color: var(--accent-yellow); }
+.difficulty-btn.active.diff-hard { border-color: var(--accent-red); background: var(--accent-red-soft); color: var(--accent-red); }
+
 /* Flashcards / Revisions */
 .flashcard { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
 .reveal-btn { width: 100%; margin-top: 20px; padding: 14px; background: var(--accent-blue-soft); color: var(--accent-blue); border: 2px dashed var(--accent-blue); border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
