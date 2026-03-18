@@ -217,6 +217,15 @@ tr:hover td { background: var(--bg-card); }
 .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bounce { 0%,80%,100% { transform:scale(0.6); opacity:0.4; } 40% { transform:scale(1); opacity:1; } }
 
+/* Flashcards / Revisions */
+.flashcard { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+.reveal-btn { width: 100%; margin-top: 20px; padding: 14px; background: var(--accent-blue-soft); color: var(--accent-blue); border: 2px dashed var(--accent-blue); border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+.reveal-btn:hover { background: var(--accent-blue); color: #fff; border-style: solid; }
+.flashcard-answer { margin-top: 20px; padding: 16px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: var(--radius-sm); color: var(--text-secondary); line-height: 1.6; font-size: 0.92rem; }
+.flashcard-answer-label { font-weight: 700; color: var(--accent-green); margin-bottom: 6px; font-size: 0.85rem; }
+.flashcard-nav { display: flex; justify-content: space-between; margin-top: 16px; }
+.error-prev-answer { margin-top: 16px; padding: 12px; background: var(--accent-red-soft); border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-secondary); border: 1px solid rgba(239,68,68,0.15); }
+
 /* Quota (Free plan) */
 .quota-banner { padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 16px; }
 .quota-banner.quota-reached { border-color: var(--accent-red); background: var(--accent-red-soft); }

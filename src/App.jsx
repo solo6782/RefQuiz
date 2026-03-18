@@ -1,12 +1,13 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
-import { BookOpen, BarChart3, FileText, Settings, LogOut, Play, Home as HomeIcon } from 'lucide-react'
+import { BookOpen, BarChart3, FileText, Settings, LogOut, Play, Home as HomeIcon, Layers } from 'lucide-react'
 import Auth from './components/Auth'
 import HomePage from './components/Home'
 import Quiz from './components/Quiz'
 import Dashboard from './components/Dashboard'
 import Resources from './components/Resources'
+import Revisions from './components/Revisions'
 import Admin from './components/Admin'
 
 // Context
@@ -30,6 +31,9 @@ function Navbar({ user, profile, onLogout }) {
           </Link>
           <Link to="/quiz" className={isActive('/quiz')}>
             <Play size={18} /><span>Quiz</span>
+          </Link>
+          <Link to="/revisions" className={isActive('/revisions')}>
+            <Layers size={18} /><span>Révisions</span>
           </Link>
           <Link to="/dashboard" className={isActive('/dashboard')}>
             <BarChart3 size={18} /><span>Stats</span>
@@ -125,6 +129,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/quiz" element={<Quiz />} />
+            <Route path="/revisions" element={<Revisions />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/resources" element={<Resources />} />
             {profile?.role === 'admin' && (
