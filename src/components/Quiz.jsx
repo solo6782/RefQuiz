@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff } from 'lucide-react'
+import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff, Lock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
+const FREE_WEEKLY_LIMIT = 3
 
 export default function Quiz() {
   const { profile, categories } = useApp()
@@ -23,6 +24,34 @@ export default function Quiz() {
   const [evaluating, setEvaluating] = useState(false)
   const [currentFeedback, setCurrentFeedback] = useState(null)
   const [sessionId, setSessionId] = useState(null)
+
+  // Quota hebdomadaire (free = 3/semaine)
+  const [weeklyCount, setWeeklyCount] = useState(0)
+  const isFree = profile?.plan === 'free' || (!profile?.plan && profile?.role !== 'admin')
+  const quotaRemaining = FREE_WEEKLY_LIMIT - weeklyCount
+  const quotaReached = isFree && weeklyCount >= FREE_WEEKLY_LIMIT
+
+  useEffect(() => {
+    if (isFree) loadWeeklyCount()
+  }, [profile])
+
+  async function loadWeeklyCount() {
+    // Lundi de cette semaine à 00:00
+    const now = new Date()
+    const day = now.getDay()
+    const diffToMonday = day === 0 ? 6 : day - 1
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - diffToMonday)
+    monday.setHours(0, 0, 0, 0)
+
+    const { count } = await supabase
+      .from('quiz_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', profile.id)
+      .gte('started_at', monday.toISOString())
+
+    setWeeklyCount(count || 0)
+  }
 
   // Speech-to-text (Web Speech API)
   const [isListening, setIsListening] = useState(false)
@@ -81,6 +110,11 @@ export default function Quiz() {
 
   // Setup : charger les questions
   async function startQuiz() {
+    if (quotaReached) {
+      alert('Tu as atteint la limite de 3 quiz par semaine en version gratuite.')
+      return
+    }
+
     let query = supabase
       .from('questions')
       .select('*, categories(name, law_number)')
@@ -252,10 +286,22 @@ export default function Quiz() {
           <h1 style={{ marginBottom: 8 }}>Nouveau Quiz</h1>
           <p className="subtitle" style={{ marginBottom: 28 }}>Configure ton quiz et c'est parti !</p>
 
+          {isFree && (
+            <div className={`quota-banner ${quotaReached ? 'quota-reached' : ''}`}>
+              <div className="quota-info">
+                <span className="quota-label">{quotaReached ? '🔒 Limite atteinte' : `📊 Version gratuite`}</span>
+                <span className="quota-count">{weeklyCount}/{FREE_WEEKLY_LIMIT} quiz cette semaine</span>
+              </div>
+              <div className="quota-bar">
+                <div className="quota-fill" style={{ width: `${Math.min(100, (weeklyCount / FREE_WEEKLY_LIMIT) * 100)}%` }} />
+              </div>
+            </div>
+          )}
+
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="form-group">
               <label>Catégorie</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)}>
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} disabled={quotaReached}>
                 <option value="">Toutes les catégories</option>
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>{c.law_number} — {c.name}</option>
@@ -265,7 +311,7 @@ export default function Quiz() {
 
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label>Nombre de questions</label>
-              <select value={numQuestions} onChange={e => setNumQuestions(parseInt(e.target.value))}>
+              <select value={numQuestions} onChange={e => setNumQuestions(parseInt(e.target.value))} disabled={quotaReached}>
                 <option value={5}>5 questions</option>
                 <option value={10}>10 questions</option>
                 <option value={15}>15 questions</option>
@@ -274,9 +320,19 @@ export default function Quiz() {
             </div>
           </div>
 
-          <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={startQuiz}>
-            <Play size={20} /> Commencer
-          </button>
+          {quotaReached ? (
+            <div className="quota-blocked">
+              <Lock size={20} />
+              <div>
+                <strong>Limite hebdomadaire atteinte</strong>
+                <p>Reviens lundi prochain ou passe en Premium pour des quiz illimités !</p>
+              </div>
+            </div>
+          ) : (
+            <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={startQuiz}>
+              <Play size={20} /> Commencer
+            </button>
+          )}
         </div>
       </div>
     )

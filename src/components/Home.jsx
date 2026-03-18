@@ -1,18 +1,41 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Play, BarChart3, FileText, Settings, Trophy, Target, TrendingUp } from 'lucide-react'
+import { Play, BarChart3, FileText, Settings, Trophy, Target, TrendingUp, Lock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
+
+const FREE_WEEKLY_LIMIT = 3
 
 export default function HomePage() {
   const { profile, categories } = useApp()
   const [stats, setStats] = useState({ sessions: 0, avgScore: 0, totalQuestions: 0 })
   const [recentSessions, setRecentSessions] = useState([])
+  const [weeklyCount, setWeeklyCount] = useState(0)
+
+  const isFree = profile?.plan === 'free' || (!profile?.plan && profile?.role !== 'admin')
 
   useEffect(() => {
     loadStats()
     loadRecentSessions()
+    if (isFree) loadWeeklyCount()
   }, [])
+
+  async function loadWeeklyCount() {
+    const now = new Date()
+    const day = now.getDay()
+    const diffToMonday = day === 0 ? 6 : day - 1
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - diffToMonday)
+    monday.setHours(0, 0, 0, 0)
+
+    const { count } = await supabase
+      .from('quiz_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', profile.id)
+      .gte('started_at', monday.toISOString())
+
+    setWeeklyCount(count || 0)
+  }
 
   async function loadStats() {
     const { data } = await supabase
@@ -66,6 +89,18 @@ export default function HomePage() {
       </div>
 
       {/* Actions principales */}
+      {isFree && (
+        <div className={`quota-banner ${weeklyCount >= FREE_WEEKLY_LIMIT ? 'quota-reached' : ''}`} style={{ marginBottom: 20 }}>
+          <div className="quota-info">
+            <span className="quota-label">📊 Version gratuite</span>
+            <span className="quota-count">{weeklyCount}/{FREE_WEEKLY_LIMIT} quiz cette semaine</span>
+          </div>
+          <div className="quota-bar">
+            <div className="quota-fill" style={{ width: `${Math.min(100, (weeklyCount / FREE_WEEKLY_LIMIT) * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
       <div className="home-actions">
         <Link to="/quiz" className="action-card">
           <div className="action-icon" style={{ background: 'var(--accent-blue-soft)', color: 'var(--accent-blue)' }}>

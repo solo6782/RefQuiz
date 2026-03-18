@@ -459,6 +459,7 @@ export default function Admin() {
                 <th>Pseudo</th>
                 <th>Email</th>
                 <th>Rôle</th>
+                <th>Plan</th>
                 <th>Inscrit le</th>
               </tr>
             </thead>
@@ -471,6 +472,21 @@ export default function Admin() {
                     <span className={`badge ${u.role === 'admin' ? 'badge-red' : 'badge-blue'}`}>
                       {u.role}
                     </span>
+                  </td>
+                  <td>
+                    <select
+                      value={u.plan || 'free'}
+                      onChange={async (e) => {
+                        const newPlan = e.target.value
+                        await supabase.from('profiles').update({ plan: newPlan }).eq('id', u.id)
+                        setUsers(users.map(x => x.id === u.id ? { ...x, plan: newPlan } : x))
+                      }}
+                      style={{ padding: '4px 8px', fontSize: '0.8rem', minWidth: 100 }}
+                    >
+                      <option value="free">🆓 Free</option>
+                      <option value="premium">⭐ Premium</option>
+                      <option value="admin">🔧 Admin</option>
+                    </select>
                   </td>
                   <td>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
                 </tr>
