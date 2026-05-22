@@ -237,21 +237,30 @@ export default function Quiz() {
           user_answer: openAnswer,
         }),
       })
-      evaluation = await res.json()
+      const body = await res.json()
+      if (!res.ok || typeof body?.score !== 'number') {
+        throw new Error(body?.error || 'Réponse IA invalide')
+      }
+      evaluation = body
     } catch (err) {
+      console.error('Évaluation IA indisponible :', err)
       evaluation = {
         score: 0.5,
         is_correct: false,
-        feedback: 'Impossible d\'évaluer automatiquement. Compare avec la réponse attendue ci-dessous.',
+        feedback: 'Évaluation automatique indisponible pour cette question. Compare ta réponse avec la réponse attendue ci-dessous.',
         missing_elements: [],
       }
     }
 
+    // Sécurité affichage : score toujours un nombre fini entre 0 et 1
+    const rawScore = Number(evaluation.score)
+    const safeScore = Number.isFinite(rawScore) ? Math.max(0, Math.min(1, rawScore)) : 0.5
+
     const answer = {
       question_id: currentQuestion.id,
       user_answer: openAnswer,
-      is_correct: evaluation.is_correct,
-      ai_score: evaluation.score,
+      is_correct: evaluation.is_correct === true,
+      ai_score: safeScore,
       ai_feedback: evaluation.feedback,
       missing_elements: evaluation.missing_elements,
     }
@@ -599,7 +608,7 @@ export default function Quiz() {
         {showCorrection && currentFeedback && currentQuestion.type === 'open' && (
           <div className={`ai-feedback ${currentFeedback.ai_score >= 0.7 ? 'good' : currentFeedback.ai_score >= 0.4 ? 'partial' : 'bad'}`}>
             <div className="feedback-score">
-              Score : {Math.round(currentFeedback.ai_score * 100)}%
+              Score : {Number.isFinite(currentFeedback.ai_score) ? Math.round(currentFeedback.ai_score * 100) : '—'}%
               {currentFeedback.is_correct ? ' ✅' : ' ❌'}
             </div>
             <div className="feedback-text">{currentFeedback.ai_feedback}</div>
