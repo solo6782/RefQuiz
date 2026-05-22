@@ -52,7 +52,7 @@ function Flashcards({ categories, onBack }) {
   async function loadCards() {
     let query = supabase
       .from('rq_questions')
-      .select('*, categories(name, law_number)')
+      .select('*, categories:rq_categories(name, law_number)')
       .eq('is_active', true)
 
     if (categoryId) {
@@ -227,7 +227,7 @@ function ReviewErrors({ profile, categories, onBack }) {
       .select(`
         question_id,
         ai_score,
-        questions (*, categories(name, law_number))
+        questions:rq_questions (*, categories:rq_categories(name, law_number))
       `)
       .eq('is_correct', false)
       .eq('questions.is_active', true)
@@ -252,7 +252,7 @@ function ReviewErrors({ profile, categories, onBack }) {
         question_id,
         ai_score,
         user_answer,
-        questions!inner (*, categories!inner(name, law_number))
+        questions:rq_questions!inner (*, categories:rq_categories!inner(name, law_number))
       `)
       .in('session_id', sessionIds)
       .eq('is_correct', false)

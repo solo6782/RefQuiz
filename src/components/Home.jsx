@@ -54,7 +54,7 @@ export default function HomePage() {
   async function loadRecentSessions() {
     const { data } = await supabase
       .from('rq_quiz_sessions')
-      .select('*, categories(name)')
+      .select('*, categories:rq_categories(name)')
       .eq('user_id', profile.id)
       .eq('completed', true)
       .order('completed_at', { ascending: false })

@@ -17,7 +17,7 @@ export default function Dashboard() {
     // Charger toutes les sessions complètes
     const { data: sessionsData } = await supabase
       .from('rq_quiz_sessions')
-      .select('*, categories(name, law_number)')
+      .select('*, categories:rq_categories(name, law_number)')
       .eq('user_id', profile.id)
       .eq('completed', true)
       .order('completed_at', { ascending: false })
@@ -30,7 +30,7 @@ export default function Dashboard() {
       .select(`
         is_correct,
         ai_score,
-        questions!inner(category_id, categories(name, law_number))
+        questions:rq_questions!inner(category_id, categories:rq_categories(name, law_number))
       `)
       .in('session_id', (sessionsData || []).map(s => s.id))
 

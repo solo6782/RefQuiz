@@ -145,7 +145,7 @@ export default function Quiz() {
 
     let query = supabase
       .from('rq_questions')
-      .select('*, categories(name, law_number)')
+      .select('*, categories:rq_categories(name, law_number)')
       .eq('is_active', true)
       .lte('difficulty', maxDiff)
 
