@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Upload, Users, BookOpen, FileText } from 'lucide-react'
+import { useState, useEffect, Fragment } from 'react'
+import { Plus, Edit2, Trash2, Upload, Users, BookOpen, FileText, ChevronDown, ChevronRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
 
@@ -9,6 +9,9 @@ export default function Admin() {
   const [questions, setQuestions] = useState([])
   const [documents, setDocuments] = useState([])
   const [users, setUsers] = useState([])
+  const [sessions, setSessions] = useState([])
+  const [answers, setAnswers] = useState([])
+  const [expandedUser, setExpandedUser] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -18,14 +21,18 @@ export default function Admin() {
   }, [])
 
   async function loadAll() {
-    const [qRes, dRes, uRes] = await Promise.all([
+    const [qRes, dRes, uRes, sRes, aRes] = await Promise.all([
       supabase.from('rq_questions').select('*, rq_categories(name, law_number)').order('id', { ascending: false }),
       supabase.from('rq_documents').select('*').order('uploaded_at', { ascending: false }),
       supabase.from('rq_profiles').select('*').order('created_at', { ascending: false }),
+      supabase.from('rq_quiz_sessions').select('*').order('created_at', { ascending: false }),
+      supabase.from('rq_quiz_answers').select('is_correct, ai_score, session_id, rq_questions(category_id, rq_categories(law_number))'),
     ])
     setQuestions(qRes.data || [])
     setDocuments(dRes.data || [])
     setUsers(uRes.data || [])
+    setSessions(sRes.data || [])
+    setAnswers(aRes.data || [])
     setLoading(false)
   }
 
@@ -307,6 +314,35 @@ export default function Admin() {
     loadAll()
   }
 
+  // Stats agrégées pour un utilisateur donné
+  function statsForUser(userId) {
+    const userSessions = sessions.filter(s => s.user_id === userId)
+    const completed = userSessions.filter(s => s.completed)
+    const nbQuiz = completed.length
+    const avgScore = nbQuiz > 0
+      ? Math.round(completed.reduce((sum, s) => sum + (Number(s.score) || 0), 0) / nbQuiz)
+      : null
+    const lastQuiz = userSessions[0]?.completed_at || userSessions[0]?.created_at || null
+
+    // Points faibles par loi (sur les réponses de cet utilisateur)
+    const sessionIds = new Set(userSessions.map(s => s.id))
+    const userAnswers = answers.filter(a => sessionIds.has(a.session_id))
+    const byLaw = {}
+    for (const a of userAnswers) {
+      const law = a.rq_questions?.rq_categories?.law_number || '—'
+      if (!byLaw[law]) byLaw[law] = { total: 0, correct: 0 }
+      byLaw[law].total += 1
+      if (a.is_correct) byLaw[law].correct += 1
+    }
+    const lawStats = Object.entries(byLaw)
+      .map(([law, v]) => ({ law, total: v.total, correct: v.correct, pct: Math.round((v.correct / v.total) * 100) }))
+      .sort((a, b) => a.pct - b.pct)
+
+    return { nbQuiz, avgScore, lastQuiz, userSessions: completed, lawStats }
+  }
+
+  const lawNum = (l) => parseInt(String(l).replace(/\D/g, ''), 10) || 0
+
   if (loading) {
     return (
       <div className="page">
@@ -456,41 +492,120 @@ export default function Admin() {
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>Pseudo</th>
                 <th>Email</th>
+                <th>Quiz terminés</th>
+                <th>Score moyen</th>
+                <th>Dernier quiz</th>
                 <th>Rôle</th>
                 <th>Plan</th>
-                <th>Inscrit le</th>
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
-                <tr key={u.id}>
-                  <td style={{ fontWeight: 500 }}>{u.display_name}</td>
-                  <td>{u.email}</td>
-                  <td>
-                    <span className={`badge ${u.role === 'admin' ? 'badge-red' : 'badge-blue'}`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td>
-                    <select
-                      value={u.plan || 'free'}
-                      onChange={async (e) => {
-                        const newPlan = e.target.value
-                        await supabase.from('rq_profiles').update({ plan: newPlan }).eq('id', u.id)
-                        setUsers(users.map(x => x.id === u.id ? { ...x, plan: newPlan } : x))
-                      }}
-                      style={{ padding: '4px 8px', fontSize: '0.8rem', minWidth: 100 }}
+              {users.map(u => {
+                const st = statsForUser(u.id)
+                const isOpen = expandedUser === u.id
+                return (
+                  <Fragment key={u.id}>
+                    <tr
+                      onClick={() => setExpandedUser(isOpen ? null : u.id)}
+                      style={{ cursor: 'pointer' }}
                     >
-                      <option value="free">🆓 Free</option>
-                      <option value="premium">⭐ Premium</option>
-                      <option value="admin">🔧 Admin</option>
-                    </select>
-                  </td>
-                  <td>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
-                </tr>
-              ))}
+                      <td style={{ width: 28 }}>
+                        {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </td>
+                      <td style={{ fontWeight: 500 }}>{u.display_name}</td>
+                      <td>{u.email}</td>
+                      <td>{st.nbQuiz}</td>
+                      <td>
+                        {st.avgScore === null ? '—' : (
+                          <span className={`badge ${st.avgScore >= 70 ? 'badge-green' : st.avgScore >= 50 ? 'badge-blue' : 'badge-red'}`}>
+                            {st.avgScore}%
+                          </span>
+                        )}
+                      </td>
+                      <td>{st.lastQuiz ? new Date(st.lastQuiz).toLocaleDateString('fr-FR') : '—'}</td>
+                      <td>
+                        <span className={`badge ${u.role === 'admin' ? 'badge-red' : 'badge-blue'}`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <select
+                          value={u.plan || 'free'}
+                          onChange={async (e) => {
+                            const newPlan = e.target.value
+                            await supabase.from('rq_profiles').update({ plan: newPlan }).eq('id', u.id)
+                            setUsers(users.map(x => x.id === u.id ? { ...x, plan: newPlan } : x))
+                          }}
+                          style={{ padding: '4px 8px', fontSize: '0.8rem', minWidth: 100 }}
+                        >
+                          <option value="free">🆓 Free</option>
+                          <option value="premium">⭐ Premium</option>
+                          <option value="admin">🔧 Admin</option>
+                        </select>
+                      </td>
+                    </tr>
+
+                    {isOpen && (
+                      <tr>
+                        <td colSpan={8} style={{ background: 'var(--bg-card-hover)', padding: 18 }}>
+                          {st.nbQuiz === 0 ? (
+                            <p style={{ color: 'var(--text-muted)', margin: 0 }}>
+                              Cet utilisateur n'a pas encore terminé de quiz.
+                            </p>
+                          ) : (
+                            <div style={{ display: 'grid', gap: 22, gridTemplateColumns: '1fr 1fr' }}>
+                              {/* Points faibles par loi */}
+                              <div>
+                                <h4 style={{ margin: '0 0 10px' }}>Réussite par loi (les plus faibles en premier)</h4>
+                                {st.lawStats.length === 0 ? (
+                                  <p style={{ color: 'var(--text-muted)', margin: 0 }}>Aucune réponse enregistrée.</p>
+                                ) : (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                    {st.lawStats.map(ls => (
+                                      <div key={ls.law} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <span style={{ minWidth: 56, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{ls.law}</span>
+                                        <div style={{ flex: 1, height: 8, background: 'var(--bg-card)', borderRadius: 999, overflow: 'hidden' }}>
+                                          <div style={{
+                                            width: `${ls.pct}%`, height: '100%',
+                                            background: ls.pct >= 70 ? 'var(--accent-green)' : ls.pct >= 50 ? 'var(--accent-blue)' : 'var(--accent-red)',
+                                          }} />
+                                        </div>
+                                        <span style={{ minWidth: 78, fontSize: '0.8rem', textAlign: 'right', color: 'var(--text-muted)' }}>
+                                          {ls.pct}% ({ls.correct}/{ls.total})
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Historique des quiz */}
+                              <div>
+                                <h4 style={{ margin: '0 0 10px' }}>Historique des quiz</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
+                                  {st.userSessions.map(s => (
+                                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: '0.84rem', padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
+                                      <span style={{ color: 'var(--text-secondary)' }}>
+                                        {new Date(s.completed_at || s.created_at).toLocaleDateString('fr-FR')} — {s.total_questions} questions
+                                      </span>
+                                      <span className={`badge ${Number(s.score) >= 70 ? 'badge-green' : Number(s.score) >= 50 ? 'badge-blue' : 'badge-red'}`}>
+                                        {Math.round(Number(s.score) || 0)}%
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })}
             </tbody>
           </table>
         </div>
