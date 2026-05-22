@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS public.rq_questions (
   expected_answer TEXT,
   explanation TEXT,
   difficulty INT DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 3),
+  source TEXT,
   source_document_id INT REFERENCES public.rq_documents(id) ON DELETE SET NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
