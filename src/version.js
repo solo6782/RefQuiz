@@ -3,9 +3,17 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.0.2'
+export const VERSION = '1.0.3'
 
 export const CHANGELOG = [
+  {
+    version: '1.0.3',
+    date: '2026-05-22',
+    title: 'Correctif statistiques admin',
+    changes: [
+      'Correctif : les statistiques des utilisateurs s\'affichent désormais correctement (les quiz terminés n\'apparaissaient pas).',
+    ],
+  },
   {
     version: '1.0.2',
     date: '2026-05-22',

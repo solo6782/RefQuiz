@@ -25,7 +25,7 @@ export default function Admin() {
       supabase.from('rq_questions').select('*, rq_categories(name, law_number)').order('id', { ascending: false }),
       supabase.from('rq_documents').select('*').order('uploaded_at', { ascending: false }),
       supabase.from('rq_profiles').select('*').order('created_at', { ascending: false }),
-      supabase.from('rq_quiz_sessions').select('*').order('created_at', { ascending: false }),
+      supabase.from('rq_quiz_sessions').select('*').order('started_at', { ascending: false }),
       supabase.from('rq_quiz_answers').select('is_correct, ai_score, session_id, rq_questions(category_id, rq_categories(law_number))'),
     ])
     setQuestions(qRes.data || [])
@@ -322,7 +322,7 @@ export default function Admin() {
     const avgScore = nbQuiz > 0
       ? Math.round(completed.reduce((sum, s) => sum + (Number(s.score) || 0), 0) / nbQuiz)
       : null
-    const lastQuiz = userSessions[0]?.completed_at || userSessions[0]?.created_at || null
+    const lastQuiz = userSessions[0]?.completed_at || userSessions[0]?.started_at || null
 
     // Points faibles par loi (sur les réponses de cet utilisateur)
     const sessionIds = new Set(userSessions.map(s => s.id))
@@ -589,7 +589,7 @@ export default function Admin() {
                                   {st.userSessions.map(s => (
                                     <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: '0.84rem', padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
                                       <span style={{ color: 'var(--text-secondary)' }}>
-                                        {new Date(s.completed_at || s.created_at).toLocaleDateString('fr-FR')} — {s.total_questions} questions
+                                        {new Date(s.completed_at || s.started_at).toLocaleDateString('fr-FR')} — {s.total_questions} questions
                                       </span>
                                       <span className={`badge ${Number(s.score) >= 70 ? 'badge-green' : Number(s.score) >= 50 ? 'badge-blue' : 'badge-red'}`}>
                                         {Math.round(Number(s.score) || 0)}%
