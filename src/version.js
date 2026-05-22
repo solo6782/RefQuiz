@@ -3,9 +3,19 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.0.0'
+export const VERSION = '1.0.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.0.1',
+    date: '2026-05-22',
+    title: 'Correcteur plus robuste',
+    changes: [
+      'Évaluation des réponses libres plus fiable en cas de forte affluence : jusqu\'à 4 tentatives automatiques.',
+      'Si le correcteur reste indisponible, la question est annulée et remplacée par une autre, pour garder le nombre de questions prévu.',
+      'Messages d\'attente plus clairs pendant l\'évaluation.',
+    ],
+  },
   {
     version: '1.0.0',
     date: '2026-05-22',
