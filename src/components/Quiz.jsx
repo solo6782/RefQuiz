@@ -239,6 +239,7 @@ export default function Quiz() {
       })
       const body = await res.json()
       if (!res.ok || typeof body?.score !== 'number') {
+        console.error('Réponse /api/evaluate en erreur :', body)
         throw new Error(body?.error || 'Réponse IA invalide')
       }
       evaluation = body
