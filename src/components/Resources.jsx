@@ -20,7 +20,7 @@ export default function Resources() {
 
   async function loadDocuments() {
     const { data } = await supabase
-      .from('documents')
+      .from('rq_documents')
       .select('*')
       .order('uploaded_at', { ascending: false })
 
@@ -30,7 +30,7 @@ export default function Resources() {
 
   async function downloadDoc(doc) {
     const { data, error } = await supabase.storage
-      .from('documents')
+      .from('rq_documents')
       .createSignedUrl(doc.storage_path, 3600) // 1h
 
     if (data?.signedUrl) {

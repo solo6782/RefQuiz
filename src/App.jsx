@@ -65,14 +65,14 @@ export default function App() {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      if (session) loadProfile(session.user.id)
+      if (session) loadProfile(session.user)
       else setLoading(false)
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (session) loadProfile(session.user.id)
+      if (session) loadProfile(session.user)
       else { setProfile(null); setLoading(false) }
     })
 
@@ -83,19 +83,41 @@ export default function App() {
     if (session) loadCategories()
   }, [session])
 
-  async function loadProfile(userId) {
-    const { data } = await supabase
-      .from('profiles')
+  async function loadProfile(user) {
+    // 1. Tente de charger le profil existant
+    let { data } = await supabase
+      .from('rq_profiles')
       .select('*')
-      .eq('id', userId)
-      .single()
+      .eq('id', user.id)
+      .maybeSingle()
+
+    // 2. Première connexion : pas encore de profil → on le crée
+    //    (remplace l'ancien trigger DB, pour ne pas toucher l'auth des autres apps du projet)
+    if (!data) {
+      const meta = user.user_metadata || {}
+      const displayName =
+        meta.full_name || meta.name || (user.email ? user.email.split('@')[0] : 'Arbitre')
+      await supabase
+        .from('rq_profiles')
+        .upsert(
+          { id: user.id, email: user.email || '', display_name: displayName },
+          { onConflict: 'id', ignoreDuplicates: true }
+        )
+      const res = await supabase
+        .from('rq_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle()
+      data = res.data
+    }
+
     setProfile(data)
     setLoading(false)
   }
 
   async function loadCategories() {
     const { data } = await supabase
-      .from('categories')
+      .from('rq_categories')
       .select('*')
       .order('sort_order')
     setCategories(data || [])

@@ -65,7 +65,7 @@ export default function Quiz() {
     monday.setHours(0, 0, 0, 0)
 
     const { count } = await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', profile.id)
       .gte('started_at', monday.toISOString())
@@ -144,7 +144,7 @@ export default function Quiz() {
     const maxDiff = mode ? mode.maxDifficulty : 3
 
     let query = supabase
-      .from('questions')
+      .from('rq_questions')
       .select('*, categories(name, law_number)')
       .eq('is_active', true)
       .lte('difficulty', maxDiff)
@@ -166,7 +166,7 @@ export default function Quiz() {
 
     // Créer la session
     const { data: session, error: sessionError } = await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .insert({
         user_id: profile.id,
         category_id: categoryIds && categoryIds.length === 1 ? categoryIds[0] : null,
@@ -263,7 +263,7 @@ export default function Quiz() {
   }
 
   async function saveAnswer(answer) {
-    await supabase.from('quiz_answers').insert({
+    await supabase.from('rq_quiz_answers').insert({
       session_id: sessionId,
       question_id: answer.question_id,
       user_answer: answer.user_answer,
@@ -296,7 +296,7 @@ export default function Quiz() {
     const pct = (totalScore / answers.length) * 100
 
     await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .update({
         score: pct,
         completed: true,

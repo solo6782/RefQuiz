@@ -29,7 +29,7 @@ export default function HomePage() {
     monday.setHours(0, 0, 0, 0)
 
     const { count } = await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', profile.id)
       .gte('started_at', monday.toISOString())
@@ -39,7 +39,7 @@ export default function HomePage() {
 
   async function loadStats() {
     const { data } = await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .select('score, total_questions')
       .eq('user_id', profile.id)
       .eq('completed', true)
@@ -53,7 +53,7 @@ export default function HomePage() {
 
   async function loadRecentSessions() {
     const { data } = await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .select('*, categories(name)')
       .eq('user_id', profile.id)
       .eq('completed', true)

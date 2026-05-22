@@ -51,7 +51,7 @@ function Flashcards({ categories, onBack }) {
 
   async function loadCards() {
     let query = supabase
-      .from('questions')
+      .from('rq_questions')
       .select('*, categories(name, law_number)')
       .eq('is_active', true)
 
@@ -223,7 +223,7 @@ function ReviewErrors({ profile, categories, onBack }) {
 
     // Chercher les questions ratées (score < 0.7)
     let query = supabase
-      .from('quiz_answers')
+      .from('rq_quiz_answers')
       .select(`
         question_id,
         ai_score,
@@ -234,7 +234,7 @@ function ReviewErrors({ profile, categories, onBack }) {
 
     // Filtrer par session de l'utilisateur
     const { data: sessions } = await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .select('id')
       .eq('user_id', profile.id)
 
@@ -247,7 +247,7 @@ function ReviewErrors({ profile, categories, onBack }) {
 
     const sessionIds = sessions.map(s => s.id)
     const { data: wrongAnswers } = await supabase
-      .from('quiz_answers')
+      .from('rq_quiz_answers')
       .select(`
         question_id,
         ai_score,

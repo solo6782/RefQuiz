@@ -19,9 +19,9 @@ export default function Admin() {
 
   async function loadAll() {
     const [qRes, dRes, uRes] = await Promise.all([
-      supabase.from('questions').select('*, categories(name, law_number)').order('id', { ascending: false }),
-      supabase.from('documents').select('*').order('uploaded_at', { ascending: false }),
-      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+      supabase.from('rq_questions').select('*, rq_categories(name, law_number)').order('id', { ascending: false }),
+      supabase.from('rq_documents').select('*').order('uploaded_at', { ascending: false }),
+      supabase.from('rq_profiles').select('*').order('created_at', { ascending: false }),
     ])
     setQuestions(qRes.data || [])
     setDocuments(dRes.data || [])
@@ -74,9 +74,9 @@ export default function Admin() {
       }
 
       if (initial?.id) {
-        await supabase.from('questions').update(payload).eq('id', initial.id)
+        await supabase.from('rq_questions').update(payload).eq('id', initial.id)
       } else {
-        await supabase.from('questions').insert(payload)
+        await supabase.from('rq_questions').insert(payload)
       }
       onSave()
     }
@@ -224,7 +224,7 @@ export default function Admin() {
       const path = `${Date.now()}_${file.name}`
 
       const { error: uploadError } = await supabase.storage
-        .from('documents')
+        .from('rq_documents')
         .upload(path, file)
 
       if (uploadError) {
@@ -233,7 +233,7 @@ export default function Admin() {
         return
       }
 
-      await supabase.from('documents').insert({
+      await supabase.from('rq_documents').insert({
         title,
         category,
         description: description || null,
@@ -291,19 +291,19 @@ export default function Admin() {
 
   async function deleteQuestion(id) {
     if (!confirm('Supprimer cette question ?')) return
-    await supabase.from('questions').delete().eq('id', id)
+    await supabase.from('rq_questions').delete().eq('id', id)
     loadAll()
   }
 
   async function deleteDocument(doc) {
     if (!confirm('Supprimer ce document ?')) return
-    await supabase.storage.from('documents').remove([doc.storage_path])
-    await supabase.from('documents').delete().eq('id', doc.id)
+    await supabase.storage.from('rq_documents').remove([doc.storage_path])
+    await supabase.from('rq_documents').delete().eq('id', doc.id)
     loadAll()
   }
 
   async function toggleQuestion(q) {
-    await supabase.from('questions').update({ is_active: !q.is_active }).eq('id', q.id)
+    await supabase.from('rq_questions').update({ is_active: !q.is_active }).eq('id', q.id)
     loadAll()
   }
 
@@ -478,7 +478,7 @@ export default function Admin() {
                       value={u.plan || 'free'}
                       onChange={async (e) => {
                         const newPlan = e.target.value
-                        await supabase.from('profiles').update({ plan: newPlan }).eq('id', u.id)
+                        await supabase.from('rq_profiles').update({ plan: newPlan }).eq('id', u.id)
                         setUsers(users.map(x => x.id === u.id ? { ...x, plan: newPlan } : x))
                       }}
                       style={{ padding: '4px 8px', fontSize: '0.8rem', minWidth: 100 }}

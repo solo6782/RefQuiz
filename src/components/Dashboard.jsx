@@ -16,7 +16,7 @@ export default function Dashboard() {
   async function loadData() {
     // Charger toutes les sessions complètes
     const { data: sessionsData } = await supabase
-      .from('quiz_sessions')
+      .from('rq_quiz_sessions')
       .select('*, categories(name, law_number)')
       .eq('user_id', profile.id)
       .eq('completed', true)
@@ -26,7 +26,7 @@ export default function Dashboard() {
 
     // Charger les réponses par catégorie
     const { data: answersData } = await supabase
-      .from('quiz_answers')
+      .from('rq_quiz_answers')
       .select(`
         is_correct,
         ai_score,
