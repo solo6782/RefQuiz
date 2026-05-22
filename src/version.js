@@ -3,9 +3,18 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.0.1'
+export const VERSION = '1.0.2'
 
 export const CHANGELOG = [
+  {
+    version: '1.0.2',
+    date: '2026-05-22',
+    title: 'Suivi des arbitres (admin)',
+    changes: [
+      'L\'administrateur peut consulter la progression de chaque utilisateur : nombre de quiz terminés, score moyen et date du dernier quiz.',
+      'Détail dépliable par utilisateur : taux de réussite par loi (points faibles en premier) et historique des quiz.',
+    ],
+  },
   {
     version: '1.0.1',
     date: '2026-05-22',
