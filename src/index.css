@@ -258,3 +258,58 @@ tr:hover td { background: var(--bg-card); }
   .auth-card { padding: 28px; }
   .progress-bar { width: 120px; }
 }
+
+/* ===== Badge de version + popup changelog ===== */
+.navbar-brand-wrap { display: flex; align-items: center; gap: 8px; }
+.version-badge {
+  background: var(--accent-blue-soft);
+  color: var(--accent-blue);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.4;
+  transition: all 0.2s;
+}
+.version-badge:hover { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+.changelog-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.changelog-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 560px;
+  max-height: 80vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.changelog-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px; border-bottom: 1px solid var(--border);
+}
+.changelog-header h2 { margin: 0; font-size: 1.15rem; color: var(--text-primary); }
+.changelog-close {
+  background: none; border: none; color: var(--text-secondary);
+  cursor: pointer; padding: 4px; border-radius: var(--radius-sm); display: flex;
+}
+.changelog-close:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.changelog-body { padding: 18px 22px; overflow-y: auto; }
+.changelog-entry { margin-bottom: 22px; }
+.changelog-entry:last-child { margin-bottom: 0; }
+.changelog-entry-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.changelog-version {
+  background: var(--accent-blue-soft); color: var(--accent-blue);
+  border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 700;
+}
+.changelog-title { color: var(--text-primary); font-weight: 600; font-size: 0.95rem; }
+.changelog-date { color: var(--text-muted); font-size: 0.78rem; margin-left: auto; }
+.changelog-body ul { margin: 0; padding-left: 20px; }
+.changelog-body li { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.55; margin-bottom: 6px; }

@@ -9,6 +9,7 @@ import Dashboard from './components/Dashboard'
 import Resources from './components/Resources'
 import Revisions from './components/Revisions'
 import Admin from './components/Admin'
+import VersionBadge from './components/VersionBadge'
 
 // Context
 const AppContext = createContext()
@@ -21,10 +22,13 @@ function Navbar({ user, profile, onLogout }) {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-brand">
-          <div className="logo-icon">⚽</div>
-          RefQuiz
-        </Link>
+        <div className="navbar-brand-wrap">
+          <Link to="/" className="navbar-brand">
+            <div className="logo-icon">⚽</div>
+            RefQuiz
+          </Link>
+          <VersionBadge />
+        </div>
         <div className="navbar-links">
           <Link to="/" className={isActive('/')}>
             <HomeIcon size={18} /><span>Accueil</span>
