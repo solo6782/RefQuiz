@@ -43,6 +43,9 @@ export default function Quiz() {
   const [showCorrection, setShowCorrection] = useState(false)
   const [evaluating, setEvaluating] = useState(false)
   const [currentFeedback, setCurrentFeedback] = useState(null)
+  const [retryAttempt, setRetryAttempt] = useState(0)
+  const [spareQuestions, setSpareQuestions] = useState([])
+  const [replaceNotice, setReplaceNotice] = useState(false)
   const [sessionId, setSessionId] = useState(null)
 
   // Quota hebdomadaire (free = 3/semaine)
@@ -160,9 +163,12 @@ export default function Quiz() {
       return
     }
 
-    // Mélanger et limiter
-    const shuffled = data.sort(() => Math.random() - 0.5).slice(0, numQuestions)
-    setQuestions(shuffled)
+    // Mélanger, garder le nombre demandé + conserver le reste en réserve
+    const shuffledAll = data.sort(() => Math.random() - 0.5)
+    const active = shuffledAll.slice(0, numQuestions)
+    const spares = shuffledAll.slice(numQuestions)
+    setQuestions(active)
+    setSpareQuestions(spares)
 
     // Créer la session
     const { data: session, error: sessionError } = await supabase
@@ -170,7 +176,7 @@ export default function Quiz() {
       .insert({
         user_id: profile.id,
         category_id: categoryIds && categoryIds.length === 1 ? categoryIds[0] : null,
-        total_questions: shuffled.length,
+        total_questions: active.length,
       })
       .select()
       .single()
@@ -184,6 +190,10 @@ export default function Quiz() {
     setSessionId(session.id)
     setAnswers([])
     setCurrentIndex(0)
+    setShowCorrection(false)
+    setCurrentFeedback(null)
+    setReplaceNotice(false)
+    setRetryAttempt(0)
     setPhase('playing')
   }
 
@@ -216,60 +226,113 @@ export default function Quiz() {
     saveAnswer(answer)
   }
 
-  // Soumettre une réponse ouverte (évaluation IA)
+  // Soumettre une réponse ouverte (évaluation IA, avec réessais auto)
   async function submitOpenAnswer() {
     if (!openAnswer.trim()) return
     if (recognition && isListening) {
       recognition.stop()
       setIsListening(false)
     }
-    setEvaluating(true)
     setShowCorrection(true)
+    setEvaluating(true)
 
-    let evaluation
-    try {
-      const res = await fetch('/api/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: currentQuestion.question,
-          expected_answer: currentQuestion.expected_answer,
-          user_answer: openAnswer,
-        }),
-      })
-      const body = await res.json()
-      if (!res.ok || typeof body?.score !== 'number') {
-        console.error('Réponse /api/evaluate en erreur :', body)
-        throw new Error(body?.error || 'Réponse IA invalide')
+    const MAX_ATTEMPTS = 4
+    let evaluation = null
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      setRetryAttempt(attempt)
+      let retryable = false
+      try {
+        const res = await fetch('/api/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: currentQuestion.question,
+            expected_answer: currentQuestion.expected_answer,
+            user_answer: openAnswer,
+          }),
+        })
+        const body = await res.json().catch(() => ({}))
+
+        if (res.ok && typeof body?.score === 'number') {
+          evaluation = body
+          break
+        }
+
+        // Erreurs qu'il est inutile de réessayer (clé absente, requête invalide)
+        const nonRetryable =
+          body?.error === 'Clé API non configurée' ||
+          res.status === 400 || res.status === 401 || res.status === 403
+        retryable = !nonRetryable
+        console.error(`Évaluation IA — tentative ${attempt}/${MAX_ATTEMPTS} échouée :`, body)
+        if (nonRetryable) break
+      } catch (err) {
+        // Erreur réseau : on réessaie
+        retryable = true
+        console.error(`Évaluation IA — tentative ${attempt}/${MAX_ATTEMPTS} (réseau) :`, err)
       }
-      evaluation = body
-    } catch (err) {
-      console.error('Évaluation IA indisponible :', err)
-      evaluation = {
-        score: 0.5,
-        is_correct: false,
-        feedback: 'Évaluation automatique indisponible pour cette question. Compare ta réponse avec la réponse attendue ci-dessous.',
-        missing_elements: [],
+
+      // Attente progressive avant la prochaine tentative (sauf après la dernière)
+      if (retryable && attempt < MAX_ATTEMPTS) {
+        await new Promise(r => setTimeout(r, 800 * attempt))
       }
     }
 
-    // Sécurité affichage : score toujours un nombre fini entre 0 et 1
-    const rawScore = Number(evaluation.score)
-    const safeScore = Number.isFinite(rawScore) ? Math.max(0, Math.min(1, rawScore)) : 0.5
+    setRetryAttempt(0)
 
-    const answer = {
-      question_id: currentQuestion.id,
-      user_answer: openAnswer,
-      is_correct: evaluation.is_correct === true,
-      ai_score: safeScore,
-      ai_feedback: evaluation.feedback,
-      missing_elements: evaluation.missing_elements,
+    if (evaluation) {
+      const rawScore = Number(evaluation.score)
+      const safeScore = Number.isFinite(rawScore) ? Math.max(0, Math.min(1, rawScore)) : 0.5
+      const answer = {
+        question_id: currentQuestion.id,
+        user_answer: openAnswer,
+        is_correct: evaluation.is_correct === true,
+        ai_score: safeScore,
+        ai_feedback: evaluation.feedback,
+        missing_elements: evaluation.missing_elements,
+      }
+      setCurrentFeedback(answer)
+      setAnswers(prev => [...prev, answer])
+      setEvaluating(false)
+      saveAnswer(answer)
+    } else {
+      // Indisponible après tous les essais : on annule cette question et on la remplace.
+      setEvaluating(false)
+      replaceCurrentQuestion()
     }
-    setCurrentFeedback(answer)
-    setAnswers(prev => [...prev, answer])
-    setEvaluating(false)
+  }
 
-    saveAnswer(answer)
+  // Annule la question courante (non évaluable) et la remplace par une question de réserve
+  function replaceCurrentQuestion() {
+    setShowCorrection(false)
+    setCurrentFeedback(null)
+    setOpenAnswer('')
+    setSelectedChoice(null)
+    setReplaceNotice(true)
+
+    // valeurs figées au moment de l'appel
+    const idx = currentIndex
+    const spares = spareQuestions
+    const total = questions.length
+
+    setTimeout(() => {
+      setReplaceNotice(false)
+      if (spares.length > 0) {
+        const next = spares[0]
+        setSpareQuestions(prev => prev.slice(1))
+        setQuestions(prev => prev.map((q, i) => (i === idx ? next : q)))
+        // on reste sur le même index : la nouvelle question s'affiche à la place
+      } else {
+        // Aucune réserve disponible : on retire simplement la question du quiz
+        const remaining = questions.filter((_, i) => i !== idx)
+        setQuestions(remaining)
+        if (idx >= remaining.length) {
+          // c'était la dernière question → on termine avec ce qui a été répondu
+          finishQuiz(answers)
+        }
+        // sinon, l'index courant pointe désormais sur la question suivante (décalée)
+      }
+    }, 2200)
   }
 
   async function saveAnswer(answer) {
@@ -290,7 +353,7 @@ export default function Quiz() {
       setIsListening(false)
     }
     if (currentIndex + 1 >= questions.length) {
-      finishQuiz()
+      finishQuiz(answers)
       return
     }
     setCurrentIndex(prev => prev + 1)
@@ -298,12 +361,14 @@ export default function Quiz() {
     setOpenAnswer('')
     setShowCorrection(false)
     setCurrentFeedback(null)
+    setReplaceNotice(false)
+    setRetryAttempt(0)
   }
 
   // Terminer le quiz
-  async function finishQuiz() {
-    const totalScore = answers.reduce((sum, a) => sum + (a.ai_score || 0), 0)
-    const pct = (totalScore / answers.length) * 100
+  async function finishQuiz(finalAnswers = answers) {
+    const totalScore = finalAnswers.reduce((sum, a) => sum + (a.ai_score || 0), 0)
+    const pct = finalAnswers.length > 0 ? (totalScore / finalAnswers.length) * 100 : 0
 
     await supabase
       .from('rq_quiz_sessions')
@@ -401,7 +466,7 @@ export default function Quiz() {
   // PHASE : Results
   if (phase === 'results') {
     const totalScore = answers.reduce((sum, a) => sum + (a.ai_score || 0), 0)
-    const pct = Math.round((totalScore / answers.length) * 100)
+    const pct = answers.length > 0 ? Math.round((totalScore / answers.length) * 100) : 0
     const scoreClass = pct >= 70 ? 'high' : pct >= 50 ? 'medium' : 'low'
 
     return (
@@ -602,11 +667,20 @@ export default function Quiz() {
         {evaluating && (
           <div className="evaluating-spinner">
             <div className="spinner" />
-            Évaluation en cours...
+            {retryAttempt > 1
+              ? `Le correcteur intelligent est très sollicité, nouvelle tentative (${retryAttempt}/4)…`
+              : 'Évaluation en cours…'}
           </div>
         )}
 
-        {showCorrection && currentFeedback && currentQuestion.type === 'open' && (
+        {replaceNotice && (
+          <div className="evaluating-spinner">
+            <div className="spinner" />
+            Le correcteur est indisponible pour cette question. Elle est annulée et remplacée par une autre…
+          </div>
+        )}
+
+        {showCorrection && currentFeedback && !evaluating && currentQuestion.type === 'open' && (
           <div className={`ai-feedback ${currentFeedback.ai_score >= 0.7 ? 'good' : currentFeedback.ai_score >= 0.4 ? 'partial' : 'bad'}`}>
             <div className="feedback-score">
               Score : {Number.isFinite(currentFeedback.ai_score) ? Math.round(currentFeedback.ai_score * 100) : '—'}%
@@ -642,7 +716,7 @@ export default function Quiz() {
 
       {/* Actions */}
       <div className="quiz-actions">
-        {!showCorrection ? (
+        {replaceNotice ? null : !showCorrection ? (
           <>
             {currentQuestion.type === 'open' ? (
               <button
@@ -663,13 +737,15 @@ export default function Quiz() {
             )}
           </>
         ) : (
-          <button className="btn btn-primary" onClick={nextQuestion}>
-            {currentIndex + 1 >= questions.length ? (
-              <><CheckCircle size={18} /> Voir les résultats</>
-            ) : (
-              <><ArrowRight size={18} /> Question suivante</>
-            )}
-          </button>
+          <>
+            <button className="btn btn-primary" onClick={nextQuestion} disabled={evaluating}>
+              {currentIndex + 1 >= questions.length ? (
+                <><CheckCircle size={18} /> Voir les résultats</>
+              ) : (
+                <><ArrowRight size={18} /> Question suivante</>
+              )}
+            </button>
+          </>
         )}
       </div>
     </div>
