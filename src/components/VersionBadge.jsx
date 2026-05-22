@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { VERSION, CHANGELOG } from '../version'
 
@@ -16,7 +17,7 @@ export default function VersionBadge() {
         v{VERSION}
       </button>
 
-      {open && (
+      {open && createPortal(
         <div className="changelog-overlay" onClick={() => setOpen(false)}>
           <div
             className="changelog-modal"
@@ -55,7 +56,8 @@ export default function VersionBadge() {
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
