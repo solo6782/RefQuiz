@@ -3,9 +3,18 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.0.3'
+export const VERSION = '1.1.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.1.0',
+    date: '2026-05-22',
+    title: 'Bouton « Passer »',
+    changes: [
+      'Nouveau bouton « Passer » sur les questions à réponse libre, pour avancer quand on ne connaît pas la réponse.',
+      'La question est alors comptée comme fausse et la réponse attendue s\'affiche immédiatement pour apprendre.',
+    ],
+  },
   {
     version: '1.0.3',
     date: '2026-05-22',

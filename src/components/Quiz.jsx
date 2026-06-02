@@ -302,6 +302,27 @@ export default function Quiz() {
     }
   }
 
+  // Passer la question (l'utilisateur ne sait pas) : comptée fausse, réponse révélée
+  function skipQuestion() {
+    if (recognition && isListening) {
+      recognition.stop()
+      setIsListening(false)
+    }
+    const answer = {
+      question_id: currentQuestion.id,
+      user_answer: '',
+      is_correct: false,
+      ai_score: 0,
+      ai_feedback: 'Question passée. Voici la réponse attendue.',
+      missing_elements: [],
+      skipped: true,
+    }
+    setShowCorrection(true)
+    setCurrentFeedback(answer)
+    setAnswers(prev => [...prev, answer])
+    saveAnswer(answer)
+  }
+
   // Annule la question courante (non évaluable) et la remplace par une question de réserve
   function replaceCurrentQuestion() {
     setShowCorrection(false)
@@ -719,13 +740,23 @@ export default function Quiz() {
         {replaceNotice ? null : !showCorrection ? (
           <>
             {currentQuestion.type === 'open' ? (
-              <button
-                className="btn btn-primary"
-                onClick={submitOpenAnswer}
-                disabled={!openAnswer.trim() || evaluating}
-              >
-                Valider ma réponse
-              </button>
+              <>
+                <button
+                  className="btn btn-secondary"
+                  onClick={skipQuestion}
+                  disabled={evaluating}
+                  title="Marquer la question comme non sue et voir la réponse"
+                >
+                  Passer
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={submitOpenAnswer}
+                  disabled={!openAnswer.trim() || evaluating}
+                >
+                  Valider ma réponse
+                </button>
+              </>
             ) : (
               <button
                 className="btn btn-primary"
