@@ -3,9 +3,18 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.1.1'
+export const VERSION = '1.1.2'
 
 export const CHANGELOG = [
+  {
+    version: '1.1.2',
+    date: '2026-06-05',
+    title: 'Correction encore plus juste',
+    changes: [
+      'Le correcteur intelligent passe à un modèle plus capable pour une évaluation plus fine et plus fiable des réponses libres.',
+      'Moins de petites approximations dans les feedbacks, meilleure prise en compte des nuances et du vocabulaire arbitral.',
+    ],
+  },
   {
     version: '1.1.1',
     date: '2026-06-04',
