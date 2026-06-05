@@ -3,9 +3,19 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.1.2'
+export const VERSION = '1.2.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.2.0',
+    date: '2026-06-06',
+    title: 'Questions liées (parent / suite)',
+    changes: [
+      'Certaines questions se comprennent uniquement après une autre (ex. « Même situation, mais... »). Elles ne sont désormais plus tirées seules.',
+      'Quand une question parent est tirée, sa suite est automatiquement posée juste après, sauf si la parent tombe en dernière position du quiz.',
+      'Un petit bandeau « Suite de la question précédente » rappelle le contexte sur la question-suite.',
+    ],
+  },
   {
     version: '1.1.2',
     date: '2026-06-05',

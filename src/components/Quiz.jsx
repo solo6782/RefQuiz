@@ -163,10 +163,34 @@ export default function Quiz() {
       return
     }
 
-    // Mélanger, garder le nombre demandé + conserver le reste en réserve
-    const shuffledAll = data.sort(() => Math.random() - 0.5)
-    const active = shuffledAll.slice(0, numQuestions)
-    const spares = shuffledAll.slice(numQuestions)
+    // Séparer les questions principales des questions « suite »
+    // Une question « suite » a previous_question_id renseigné et ne doit jamais
+    // être tirée seule : elle s'ajoute automatiquement après sa parent si celle-ci est sélectionnée.
+    const parents = data.filter(q => !q.previous_question_id)
+    const followersByParentId = new Map()
+    for (const q of data) {
+      if (q.previous_question_id) {
+        followersByParentId.set(q.previous_question_id, q)
+      }
+    }
+
+    // Mélanger les parents et construire la liste active en insérant chaque "suite" juste après sa parent.
+    // On s'arrête dès qu'on atteint numQuestions, ce qui gère naturellement le cas
+    // « parent en dernière position » → sa suite ne sera pas insérée (pas de place).
+    const shuffledParents = [...parents].sort(() => Math.random() - 0.5)
+    const active = []
+    for (const q of shuffledParents) {
+      if (active.length >= numQuestions) break
+      active.push(q)
+      if (active.length >= numQuestions) break
+      const follower = followersByParentId.get(q.id)
+      if (follower) {
+        active.push(follower)
+      }
+    }
+    // Les parents non utilisés restent en réserve (au cas où l'IA fait défaut et qu'il faut remplacer).
+    const usedIds = new Set(active.map(q => q.id))
+    const spares = shuffledParents.filter(q => !usedIds.has(q.id))
     setQuestions(active)
     setSpareQuestions(spares)
 
@@ -606,6 +630,24 @@ export default function Quiz() {
             {currentQuestion.type === 'qcm' ? 'QCM' : currentQuestion.type === 'true_false' ? 'Vrai/Faux' : 'Question ouverte'}
           </span>
         </div>
+
+        {currentQuestion.previous_question_id && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 12px',
+            margin: '6px 0 10px',
+            background: 'rgba(99, 102, 241, 0.12)',
+            border: '1px solid rgba(99, 102, 241, 0.35)',
+            borderRadius: 8,
+            color: 'var(--text-secondary)',
+            fontSize: '0.85rem',
+          }}>
+            <span aria-hidden="true">↪️</span>
+            <span>Suite de la question précédente : tiens compte du contexte que tu viens de voir.</span>
+          </div>
+        )}
 
         <div className="question-text">{currentQuestion.question}</div>
 
