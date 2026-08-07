@@ -3,9 +3,18 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.2.0'
+export const VERSION = '1.3.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.3.0',
+    date: '2026-08-07',
+    title: 'Nouvelles questions Loi 3 (prépa septembre)',
+    changes: [
+      '5 nouvelles situations de Loi 3 ajoutées à la banque, issues du questionnaire LGEF Préparation Probatoire n°2 (2026/2027).',
+      'Elles couvrent des cas concrets : remplaçant présent sur le terrain, joueur supplémentaire, soigneur ou agent extérieur qui interfère avec le jeu.',
+    ],
+  },
   {
     version: '1.2.0',
     date: '2026-06-06',
