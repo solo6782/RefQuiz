@@ -3,9 +3,19 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.4.0'
+export const VERSION = '1.5.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.5.0',
+    date: '2026-08-07',
+    title: 'Tirage adapté à tes points faibles',
+    changes: [
+      'Les lois sur lesquelles tu réussis le moins sont désormais tirées un peu plus souvent (jusqu\'à deux fois plus).',
+      'Une loi n\'est prise en compte qu\'à partir de 10 réponses : un score sur deux ou trois questions ne fausse plus le tirage.',
+      'La rotation reste prioritaire : les questions jamais vues passent toujours en premier.',
+    ],
+  },
   {
     version: '1.4.0',
     date: '2026-08-07',

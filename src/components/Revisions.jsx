@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../App'
-import { fetchAskedCounts, orderByLeastAsked, shuffle, bumpAskedCounts } from '../lib/questionRotation'
+import { fetchAskedCounts, orderByLeastAsked, shuffle, bumpAskedCounts, fetchLawAccuracy, buildLawWeights } from '../lib/questionRotation'
 import { supabase } from '../lib/supabase'
 import { Layers, AlertTriangle, ChevronLeft, ChevronRight, Eye, EyeOff, RotateCcw, Shuffle, CheckCircle, Filter } from 'lucide-react'
 
@@ -35,14 +35,14 @@ export default function Revisions() {
     )
   }
 
-  if (mode === 'flashcards') return <Flashcards categories={categories} onBack={() => setMode(null)} />
+  if (mode === 'flashcards') return <Flashcards profile={profile} categories={categories} onBack={() => setMode(null)} />
   if (mode === 'errors') return <ReviewErrors profile={profile} categories={categories} onBack={() => setMode(null)} />
 }
 
 // ==========================================
 // FLASHCARDS
 // ==========================================
-function Flashcards({ categories, onBack }) {
+function Flashcards({ profile, categories, onBack }) {
   const [categoryId, setCategoryId] = useState('')
   const [cards, setCards] = useState([])
   const [index, setIndex] = useState(0)
@@ -82,9 +82,12 @@ function Flashcards({ categories, onBack }) {
 
     // Même logique que le quiz : priorité aux cartes les moins vues,
     // mélangées à l'intérieur de chaque palier.
-    const counts = await fetchAskedCounts()
+    const [counts, lawAccuracy] = await Promise.all([
+      fetchAskedCounts(),
+      fetchLawAccuracy(profile?.id),
+    ])
     const result = shuffled
-      ? orderByLeastAsked(data, counts)
+      ? orderByLeastAsked(data, counts, buildLawWeights(lawAccuracy))
       : [...data].sort((a, b) => a.id - b.id)
 
     countedRef.current = new Set()

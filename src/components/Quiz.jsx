@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff, Lock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
-import { fetchAskedCounts, orderByLeastAsked, bumpAskedCounts } from '../lib/questionRotation'
+import { fetchAskedCounts, orderByLeastAsked, bumpAskedCounts, fetchLawAccuracy, buildLawWeights } from '../lib/questionRotation'
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 const FREE_WEEKLY_LIMIT = 3
@@ -181,8 +181,14 @@ export default function Quiz() {
     // Priorité aux questions les moins posées à cet utilisateur.
     // On mélange à l'intérieur de chaque palier : l'ordre reste imprévisible
     // tout en garantissant la rotation de toute la banque.
-    const counts = await fetchAskedCounts()
-    const shuffledParents = orderByLeastAsked(parents, counts)
+    // Les lois les moins réussies sont tirées un peu plus souvent (max x2),
+    // à condition d'avoir assez de réponses pour que le taux soit fiable.
+    const [counts, lawAccuracy] = await Promise.all([
+      fetchAskedCounts(),
+      fetchLawAccuracy(profile.id),
+    ])
+    const lawWeights = buildLawWeights(lawAccuracy)
+    const shuffledParents = orderByLeastAsked(parents, counts, lawWeights)
     const active = []
     for (const q of shuffledParents) {
       if (active.length >= numQuestions) break
