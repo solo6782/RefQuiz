@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff, Lock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
+import { fetchAskedCounts, orderByLeastAsked, bumpAskedCounts } from '../lib/questionRotation'
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 const FREE_WEEKLY_LIMIT = 3
@@ -177,7 +178,11 @@ export default function Quiz() {
     // Mélanger les parents et construire la liste active en insérant chaque "suite" juste après sa parent.
     // On s'arrête dès qu'on atteint numQuestions, ce qui gère naturellement le cas
     // « parent en dernière position » → sa suite ne sera pas insérée (pas de place).
-    const shuffledParents = [...parents].sort(() => Math.random() - 0.5)
+    // Priorité aux questions les moins posées à cet utilisateur.
+    // On mélange à l'intérieur de chaque palier : l'ordre reste imprévisible
+    // tout en garantissant la rotation de toute la banque.
+    const counts = await fetchAskedCounts()
+    const shuffledParents = orderByLeastAsked(parents, counts)
     const active = []
     for (const q of shuffledParents) {
       if (active.length >= numQuestions) break
@@ -193,6 +198,9 @@ export default function Quiz() {
     const spares = shuffledParents.filter(q => !usedIds.has(q.id))
     setQuestions(active)
     setSpareQuestions(spares)
+
+    // Compter les questions posées (parents ET suites).
+    bumpAskedCounts(active.map(q => q.id))
 
     // Créer la session
     const { data: session, error: sessionError } = await supabase
@@ -366,6 +374,7 @@ export default function Quiz() {
         const next = spares[0]
         setSpareQuestions(prev => prev.slice(1))
         setQuestions(prev => prev.map((q, i) => (i === idx ? next : q)))
+        bumpAskedCounts([next.id])
         // on reste sur le même index : la nouvelle question s'affiche à la place
       } else {
         // Aucune réserve disponible : on retire simplement la question du quiz

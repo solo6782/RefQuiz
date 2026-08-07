@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../App'
+import { fetchAskedCounts, orderByLeastAsked, shuffle, bumpAskedCounts } from '../lib/questionRotation'
 import { supabase } from '../lib/supabase'
 import { Layers, AlertTriangle, ChevronLeft, ChevronRight, Eye, EyeOff, RotateCcw, Shuffle, CheckCircle, Filter } from 'lucide-react'
 
@@ -48,6 +49,19 @@ function Flashcards({ categories, onBack }) {
   const [revealed, setRevealed] = useState(false)
   const [started, setStarted] = useState(false)
   const [shuffled, setShuffled] = useState(true)
+  // Cartes déjà comptées dans cette session de révision (évite les doublons
+  // si l'utilisateur revient en arrière sur une carte).
+  const countedRef = useRef(new Set())
+
+  // Une carte n'est comptée comme « posée » que lorsqu'elle est réellement révélée.
+  function revealCard() {
+    setRevealed(true)
+    const id = cards[index]?.id
+    if (id && !countedRef.current.has(id)) {
+      countedRef.current.add(id)
+      bumpAskedCounts([id])
+    }
+  }
 
   async function loadCards() {
     let query = supabase
@@ -66,10 +80,14 @@ function Flashcards({ categories, onBack }) {
       return
     }
 
+    // Même logique que le quiz : priorité aux cartes les moins vues,
+    // mélangées à l'intérieur de chaque palier.
+    const counts = await fetchAskedCounts()
     const result = shuffled
-      ? data.sort(() => Math.random() - 0.5)
-      : data.sort((a, b) => a.id - b.id)
+      ? orderByLeastAsked(data, counts)
+      : [...data].sort((a, b) => a.id - b.id)
 
+    countedRef.current = new Set()
     setCards(result)
     setIndex(0)
     setRevealed(false)
@@ -91,7 +109,7 @@ function Flashcards({ categories, onBack }) {
   }
 
   function reshuffle() {
-    setCards(c => [...c].sort(() => Math.random() - 0.5))
+    setCards(c => shuffle(c))
     setIndex(0)
     setRevealed(false)
   }
@@ -174,7 +192,7 @@ function Flashcards({ categories, onBack }) {
         <div className="question-text">{card.question}</div>
 
         {!revealed ? (
-          <button className="reveal-btn" onClick={() => setRevealed(true)}>
+          <button className="reveal-btn" onClick={revealCard}>
             <Eye size={18} /> Révéler la réponse
           </button>
         ) : (

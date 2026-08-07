@@ -3,9 +3,19 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.3.0'
+export const VERSION = '1.4.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.4.0',
+    date: '2026-08-07',
+    title: 'Des questions plus variées',
+    changes: [
+      'Les quiz et les révisions servent en priorité les questions que tu as le moins vues : toute la banque défile avant qu\'une question ne revienne.',
+      'L\'ordre reste imprévisible : les questions d\'un même niveau de répétition sont mélangées à chaque session.',
+      'Correctif : le mélange aléatoire des questions était légèrement biaisé, il est désormais uniforme.',
+    ],
+  },
   {
     version: '1.3.0',
     date: '2026-08-07',
