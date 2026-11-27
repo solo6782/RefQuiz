@@ -3,9 +3,17 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.7.2'
+export const VERSION = '1.7.3'
 
 export const CHANGELOG = [
+  {
+    version: '1.7.3',
+    date: '2026-11-27',
+    title: 'Correcteur IA plus récent',
+    changes: [
+      'Les réponses libres sont désormais corrigées par Claude Sonnet 5.5 (plus récent et moins cher que Sonnet 4.6).',
+    ],
+  },
   {
     version: '1.7.2',
     date: '2026-11-27',
