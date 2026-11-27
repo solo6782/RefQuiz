@@ -52,7 +52,8 @@ Correction élément par élément :
   • "ok" : conforme à la réponse attendue.
   • "partial" : juste mais incomplet ou imprécis. Indique dans "missing" ce qu'il manque, tiré de la réponse attendue.
   • "wrong" : faux ou en contradiction avec la réponse attendue.
-- "text" reprend l'élément du candidat en quelques mots (5 à 12 mots), sans phrase ni commentaire.
+- Ajoute ENSUITE, à la fin de la liste, un élément "forgotten" pour chaque élément de la RÉPONSE ATTENDUE que le candidat n'a pas du tout mentionné (une décision, une sanction, une reprise…). Son "text" reprend cet élément de la réponse attendue en quelques mots. Ne liste pas comme oubli ce qui est déjà signalé en "partial".
+- Pour "ok", "partial" et "wrong", "text" reprend l'élément du candidat en quelques mots (5 à 12 mots), sans phrase ni commentaire.
 - "missing" : quelques mots seulement, uniquement pour "partial", sinon chaîne vide.
 - Aucun commentaire, aucune phrase d'encouragement, aucun blabla.
 
@@ -61,7 +62,7 @@ Réponds UNIQUEMENT en JSON valide, sans markdown :
   "score": <number 0-1>,
   "is_correct": <boolean, true si score >= 0.7>,
   "items": [
-    { "status": "ok" | "partial" | "wrong", "text": "<élément du candidat>", "missing": "<ce qui manque, ou chaîne vide>" }
+    { "status": "ok" | "partial" | "wrong" | "forgotten", "text": "<élément du candidat>", "missing": "<ce qui manque, ou chaîne vide>" }
   ]
 }`;
 
@@ -114,7 +115,7 @@ RÉPONSE DU CANDIDAT : ${user_answer}
     }
 
     // Normalisation de la liste élément par élément
-    const STATUSES = ['ok', 'partial', 'wrong'];
+    const STATUSES = ['ok', 'partial', 'wrong', 'forgotten'];
     evaluation.items = Array.isArray(evaluation.items)
       ? evaluation.items
           .filter(it => it && typeof it.text === 'string' && it.text.trim())

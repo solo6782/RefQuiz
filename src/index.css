@@ -158,6 +158,7 @@ select { cursor: pointer; appearance: none; background-image: url("data:image/sv
 .feedback-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.9rem; line-height: 1.45; color: var(--text-primary); }
 .feedback-item svg { flex-shrink: 0; margin-top: 1px; }
 .feedback-missing { color: var(--accent-yellow); }
+.feedback-forgotten { color: var(--accent-purple); font-weight: 600; }
 .evaluating-spinner { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 0.9rem; margin-top: 16px; }
 .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

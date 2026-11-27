@@ -3,9 +3,17 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.7.0'
+export const VERSION = '1.7.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.7.1',
+    date: '2026-11-27',
+    title: 'Les oublis apparaissent dans la correction',
+    changes: [
+      'Les éléments de la réponse officielle que tu n\'as pas mentionnés s\'affichent en fin de liste avec ➖ « Oublié : … ».',
+    ],
+  },
   {
     version: '1.7.0',
     date: '2026-11-27',

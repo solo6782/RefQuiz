@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff, Lock, AlertTriangle } from 'lucide-react'
+import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff, Lock, AlertTriangle, MinusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
 import { fetchAskedCounts, orderByLeastAsked, bumpAskedCounts, fetchLawAccuracy, buildLawWeights } from '../lib/questionRotation'
 
-// Correction élément par élément : ✓ bon, ⚠ incomplet, ✗ faux
-const ITEM_SYMBOLS = { ok: '✅', partial: '⚠️', wrong: '❌' }
+// Correction élément par élément : ✓ bon, ⚠ incomplet, ✗ faux, ⊖ oublié
+const ITEM_SYMBOLS = { ok: '✅', partial: '⚠️', wrong: '❌', forgotten: '➖' }
 
 // Version texte (stockée en base dans ai_feedback)
 function itemsToText(items) {
   return (items || [])
-    .map(it => `${ITEM_SYMBOLS[it.status] || '⚠️'} ${it.text}${it.status === 'partial' && it.missing ? ` — manque : ${it.missing}` : ''}`)
+    .map(it => `${ITEM_SYMBOLS[it.status] || '⚠️'} ${it.status === 'forgotten' ? 'Oublié : ' : ''}${it.text}${it.status === 'partial' && it.missing ? ` — manque : ${it.missing}` : ''}`)
     .join('\n')
 }
 
@@ -24,7 +24,9 @@ function FeedbackItems({ items }) {
           {it.status === 'ok' && <CheckCircle size={18} color="var(--accent-green)" />}
           {it.status === 'partial' && <AlertTriangle size={18} color="var(--accent-yellow)" />}
           {it.status === 'wrong' && <XCircle size={18} color="var(--accent-red)" />}
+          {it.status === 'forgotten' && <MinusCircle size={18} color="var(--accent-purple)" />}
           <span>
+            {it.status === 'forgotten' && <span className="feedback-forgotten">Oublié : </span>}
             {it.text}
             {it.status === 'partial' && it.missing && <span className="feedback-missing"> — manque : {it.missing}</span>}
           </span>
