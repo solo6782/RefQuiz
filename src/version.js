@@ -3,9 +3,18 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.7.1'
+export const VERSION = '1.7.2'
 
 export const CHANGELOG = [
+  {
+    version: '1.7.2',
+    date: '2026-11-27',
+    title: 'Légende de la correction',
+    changes: [
+      'La page « Nouveau Quiz » affiche la légende des symboles de correction : ✅ bon, ⚠️ incomplet, ❌ faux, ➖ oublié.',
+      'Le mode « Nouvelles règles » s\'appelle désormais « Quizz Spécial nouvelles règles ».',
+    ],
+  },
   {
     version: '1.7.1',
     date: '2026-11-27',

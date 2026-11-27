@@ -57,7 +57,7 @@ const DIFFICULTY_MODES = [
   { id: 'medium', label: '🟡 Moyen', maxDifficulty: 2 },
   { id: 'hard', label: '🔴 Difficile', maxDifficulty: 3 },
   // Questions nouvelles ou modifiées par la dernière édition CFA/DA
-  { id: 'new', label: '🆕 Nouvelles règles', maxDifficulty: 3, source: 'CFA/DA Juillet 2026' },
+  { id: 'new', label: '🆕 Quizz Spécial nouvelles règles', maxDifficulty: 3, source: 'CFA/DA Juillet 2026' },
 ]
 
 export default function Quiz() {
@@ -556,6 +556,16 @@ export default function Quiz() {
               <Play size={20} /> Commencer
             </button>
           )}
+
+          <div className="feedback-legend">
+            <div className="feedback-legend-title">Légende de la correction</div>
+            <ul className="feedback-items">
+              <li className="feedback-item"><CheckCircle size={18} color="var(--accent-green)" /><span>Bon</span></li>
+              <li className="feedback-item"><AlertTriangle size={18} color="var(--accent-yellow)" /><span>Incomplet <span className="feedback-missing">— manque : …</span></span></li>
+              <li className="feedback-item"><XCircle size={18} color="var(--accent-red)" /><span>Faux</span></li>
+              <li className="feedback-item"><MinusCircle size={18} color="var(--accent-purple)" /><span><span className="feedback-forgotten">Oublié : </span>élément de la réponse officielle non mentionné</span></li>
+            </ul>
+          </div>
         </div>
       </div>
     )
