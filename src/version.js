@@ -3,9 +3,18 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.6.0'
+export const VERSION = '1.7.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.7.0',
+    date: '2026-11-27',
+    title: 'Correction en liste, sans blabla',
+    changes: [
+      'La correction de l\'IA est une liste : chaque élément de ta réponse avec ✅ bon, ⚠️ incomplet (et ce qu\'il manque) ou ❌ faux.',
+      'Plus de phrases de commentaire : la liste, puis la réponse officielle.',
+    ],
+  },
   {
     version: '1.6.0',
     date: '2026-11-27',

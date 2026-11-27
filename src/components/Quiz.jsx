@@ -1,9 +1,38 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff, Lock } from 'lucide-react'
+import { Play, ArrowRight, CheckCircle, XCircle, RotateCcw, Home, Mic, MicOff, Lock, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useApp } from '../App'
 import { fetchAskedCounts, orderByLeastAsked, bumpAskedCounts, fetchLawAccuracy, buildLawWeights } from '../lib/questionRotation'
+
+// Correction élément par élément : ✓ bon, ⚠ incomplet, ✗ faux
+const ITEM_SYMBOLS = { ok: '✅', partial: '⚠️', wrong: '❌' }
+
+// Version texte (stockée en base dans ai_feedback)
+function itemsToText(items) {
+  return (items || [])
+    .map(it => `${ITEM_SYMBOLS[it.status] || '⚠️'} ${it.text}${it.status === 'partial' && it.missing ? ` — manque : ${it.missing}` : ''}`)
+    .join('\n')
+}
+
+function FeedbackItems({ items }) {
+  if (!items?.length) return null
+  return (
+    <ul className="feedback-items">
+      {items.map((it, j) => (
+        <li key={j} className={`feedback-item ${it.status}`}>
+          {it.status === 'ok' && <CheckCircle size={18} color="var(--accent-green)" />}
+          {it.status === 'partial' && <AlertTriangle size={18} color="var(--accent-yellow)" />}
+          {it.status === 'wrong' && <XCircle size={18} color="var(--accent-red)" />}
+          <span>
+            {it.text}
+            {it.status === 'partial' && it.missing && <span className="feedback-missing"> — manque : {it.missing}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 const FREE_WEEKLY_LIMIT = 3
@@ -332,8 +361,8 @@ export default function Quiz() {
         user_answer: openAnswer,
         is_correct: evaluation.is_correct === true,
         ai_score: safeScore,
-        ai_feedback: evaluation.feedback,
-        missing_elements: evaluation.missing_elements,
+        ai_feedback: itemsToText(evaluation.items),
+        items: evaluation.items || [],
       }
       setCurrentFeedback(answer)
       setAnswers(prev => [...prev, answer])
@@ -581,6 +610,14 @@ export default function Quiz() {
                 <strong>Ta réponse :</strong> {answer.user_answer}
               </div>
 
+              {answer.ai_feedback && q.type === 'open' && (
+                <div className={`ai-feedback ${answer.ai_score >= 0.7 ? 'good' : answer.ai_score >= 0.4 ? 'partial' : 'bad'}`} style={{ marginTop: 8 }}>
+                  {answer.items?.length > 0
+                    ? <FeedbackItems items={answer.items} />
+                    : <div className="feedback-text" style={{ whiteSpace: 'pre-line' }}>{answer.ai_feedback}</div>}
+                </div>
+              )}
+
               {!answer.is_correct && (
                 <div className="result-expected">
                   <strong>Réponse attendue :</strong>{' '}
@@ -590,17 +627,6 @@ export default function Quiz() {
                       ? (q.correct_index === 1 ? 'Vrai' : 'Faux')
                       : q.choices[q.correct_index]
                   }
-                </div>
-              )}
-
-              {answer.ai_feedback && q.type === 'open' && (
-                <div className={`ai-feedback ${answer.ai_score >= 0.7 ? 'good' : answer.ai_score >= 0.4 ? 'partial' : 'bad'}`} style={{ marginTop: 8 }}>
-                  <div className="feedback-text">{answer.ai_feedback}</div>
-                  {answer.missing_elements?.length > 0 && (
-                    <ul className="missing-list">
-                      {answer.missing_elements.map((el, j) => <li key={j}>{el}</li>)}
-                    </ul>
-                  )}
                 </div>
               )}
 
@@ -771,17 +797,9 @@ export default function Quiz() {
               Score : {Number.isFinite(currentFeedback.ai_score) ? Math.round(currentFeedback.ai_score * 100) : '—'}%
               {currentFeedback.is_correct ? ' ✅' : ' ❌'}
             </div>
-            <div className="feedback-text">{currentFeedback.ai_feedback}</div>
-            {currentFeedback.missing_elements?.length > 0 && (
-              <>
-                <div style={{ marginTop: 8, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                  Éléments manquants :
-                </div>
-                <ul className="missing-list">
-                  {currentFeedback.missing_elements.map((el, j) => <li key={j}>{el}</li>)}
-                </ul>
-              </>
-            )}
+            {currentFeedback.items?.length > 0
+              ? <FeedbackItems items={currentFeedback.items} />
+              : <div className="feedback-text" style={{ whiteSpace: 'pre-line' }}>{currentFeedback.ai_feedback}</div>}
             {currentQuestion.expected_answer && (
               <div style={{ marginTop: 12, padding: '10px', background: 'rgba(16,185,129,0.08)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
                 <strong style={{ color: 'var(--accent-green)' }}>Réponse attendue :</strong>

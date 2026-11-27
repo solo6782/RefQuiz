@@ -46,16 +46,23 @@ Barème :
 - 0.1-0.3 = très incomplet
 - 0.0 = contredit clairement la réponse attendue, ou hors sujet
 
-Feedback :
-- 2 phrases max, ton encourageant et factuel.
-- Cite uniquement ce qui figure dans la réponse attendue.
+Correction élément par élément :
+- Découpe la RÉPONSE DU CANDIDAT en ses éléments (une décision, une sanction, une reprise, une explication…), dans l'ordre où il les a écrits.
+- Pour chaque élément, donne un statut :
+  • "ok" : conforme à la réponse attendue.
+  • "partial" : juste mais incomplet ou imprécis. Indique dans "missing" ce qu'il manque, tiré de la réponse attendue.
+  • "wrong" : faux ou en contradiction avec la réponse attendue.
+- "text" reprend l'élément du candidat en quelques mots (5 à 12 mots), sans phrase ni commentaire.
+- "missing" : quelques mots seulement, uniquement pour "partial", sinon chaîne vide.
+- Aucun commentaire, aucune phrase d'encouragement, aucun blabla.
 
 Réponds UNIQUEMENT en JSON valide, sans markdown :
 {
   "score": <number 0-1>,
   "is_correct": <boolean, true si score >= 0.7>,
-  "feedback": "<feedback pédagogique en français, 2 phrases max>",
-  "missing_elements": ["<élément manquant tiré de la réponse attendue>"]
+  "items": [
+    { "status": "ok" | "partial" | "wrong", "text": "<élément du candidat>", "missing": "<ce qui manque, ou chaîne vide>" }
+  ]
 }`;
 
     const userMessage = `QUESTION : ${question}
@@ -75,7 +82,7 @@ RÉPONSE DU CANDIDAT : ${user_answer}
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 500,
+        max_tokens: 800,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
@@ -102,10 +109,21 @@ RÉPONSE DU CANDIDAT : ${user_answer}
       evaluation = {
         score: 0.5,
         is_correct: false,
-        feedback: "Impossible d'évaluer automatiquement cette réponse. Vérifie avec la correction.",
-        missing_elements: [],
+        items: [{ status: 'partial', text: "Évaluation automatique impossible", missing: 'vérifie avec la réponse officielle' }],
       };
     }
+
+    // Normalisation de la liste élément par élément
+    const STATUSES = ['ok', 'partial', 'wrong'];
+    evaluation.items = Array.isArray(evaluation.items)
+      ? evaluation.items
+          .filter(it => it && typeof it.text === 'string' && it.text.trim())
+          .map(it => ({
+            status: STATUSES.includes(it.status) ? it.status : 'partial',
+            text: it.text.trim(),
+            missing: typeof it.missing === 'string' ? it.missing.trim() : '',
+          }))
+      : [];
 
     return new Response(JSON.stringify(evaluation), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

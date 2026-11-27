@@ -154,6 +154,10 @@ select { cursor: pointer; appearance: none; background-image: url("data:image/sv
 .ai-feedback .feedback-text { font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); }
 .ai-feedback .missing-list { margin-top: 10px; padding-left: 20px; font-size: 0.85rem; color: var(--text-muted); }
 .ai-feedback .missing-list li { margin-bottom: 4px; }
+.feedback-items { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.feedback-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.9rem; line-height: 1.45; color: var(--text-primary); }
+.feedback-item svg { flex-shrink: 0; margin-top: 1px; }
+.feedback-missing { color: var(--accent-yellow); }
 .evaluating-spinner { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 0.9rem; margin-top: 16px; }
 .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
