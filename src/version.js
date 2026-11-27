@@ -12,7 +12,7 @@ export const CHANGELOG = [
     title: 'Légende de la correction',
     changes: [
       'La page « Nouveau Quiz » affiche la légende des symboles de correction : ✅ bon, ⚠️ incomplet, ❌ faux, ➖ oublié.',
-      'Le mode « Nouvelles règles » s\'appelle désormais « Quizz Spécial nouvelles règles ».',
+      'Le mode « Nouvelles règles » s\'appelle désormais « Quiz Spécial nouvelles règles ».',
     ],
   },
   {

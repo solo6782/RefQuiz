@@ -57,7 +57,7 @@ const DIFFICULTY_MODES = [
   { id: 'medium', label: '🟡 Moyen', maxDifficulty: 2 },
   { id: 'hard', label: '🔴 Difficile', maxDifficulty: 3 },
   // Questions nouvelles ou modifiées par la dernière édition CFA/DA
-  { id: 'new', label: '🆕 Quizz Spécial nouvelles règles', maxDifficulty: 3, source: 'CFA/DA Juillet 2026' },
+  { id: 'new', label: '🆕 Quiz Spécial nouvelles règles', maxDifficulty: 3, source: 'CFA/DA Juillet 2026' },
 ]
 
 export default function Quiz() {
