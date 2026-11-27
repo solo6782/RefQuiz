@@ -3,9 +3,19 @@
 // entrée EN HAUT du tableau CHANGELOG (format aaaa-mm-jj).
 // Versionnage sémantique : MAJEUR.MINEUR.CORRECTIF
 
-export const VERSION = '1.5.0'
+export const VERSION = '1.6.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.6.0',
+    date: '2026-11-27',
+    title: 'Questions CFA/DA Juillet 2026 et mode « Nouvelles règles »',
+    changes: [
+      'La banque de questions est à jour avec l\'édition CFA/DA Juillet 2026 : 30 questions modifiées, 4 nouvelles, 1 retirée.',
+      'Nouveau mode « Nouvelles règles » : le quiz ne pose que les questions nouvelles ou modifiées par l\'édition 2026.',
+      'Le choix « Difficulté » s\'appelle désormais « Mode ».',
+    ],
+  },
   {
     version: '1.5.0',
     date: '2026-08-07',

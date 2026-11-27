@@ -25,6 +25,8 @@ const DIFFICULTY_MODES = [
   { id: 'easy', label: '🟢 Facile', maxDifficulty: 1 },
   { id: 'medium', label: '🟡 Moyen', maxDifficulty: 2 },
   { id: 'hard', label: '🔴 Difficile', maxDifficulty: 3 },
+  // Questions nouvelles ou modifiées par la dernière édition CFA/DA
+  { id: 'new', label: '🆕 Nouvelles règles', maxDifficulty: 3, source: 'CFA/DA Juillet 2026' },
 ]
 
 export default function Quiz() {
@@ -152,6 +154,10 @@ export default function Quiz() {
       .select('*, categories:rq_categories(name, law_number)')
       .eq('is_active', true)
       .lte('difficulty', maxDiff)
+
+    if (mode?.source) {
+      query = query.eq('source', mode.source)
+    }
 
     if (categoryIds) {
       query = query.in('category_id', categoryIds)
@@ -474,7 +480,7 @@ export default function Quiz() {
             </div>
 
             <div className="form-group">
-              <label>Difficulté</label>
+              <label>Mode</label>
               <div className="difficulty-selector">
                 {DIFFICULTY_MODES.map(m => (
                   <button
@@ -491,6 +497,7 @@ export default function Quiz() {
                 {difficultyMode === 'easy' && 'Questions faciles uniquement'}
                 {difficultyMode === 'medium' && 'Questions faciles + moyennes'}
                 {difficultyMode === 'hard' && 'Toutes les questions, y compris les plus dures'}
+                {difficultyMode === 'new' && 'Uniquement les questions nouvelles ou modifiées par l’édition CFA/DA Juillet 2026'}
               </div>
             </div>
 
